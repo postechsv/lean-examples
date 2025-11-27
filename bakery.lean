@@ -273,7 +273,29 @@ lemma wait_waitOrCrit {cf cf' : Conf} :
 
 lemma crit_wait {cf cf' : Conf} :
     (crit_pred cf ∧ (cf ⇒ cf')) →
-    (wait_pred cf') := by sorry
+    (wait_pred cf') := by
+  intro ⟨⟨hts,ps',h1,hws,hk,hnodup⟩,hstep⟩
+  cases hstep with
+  | crit n m ps =>
+      simp at *
+      have hw_in_left : $[wait m] ∈ ($[wait m] ::ₘ ps : ProcSet) := by
+        simp
+      have hw_in_right : $[wait m] ∈ ($[crit m] ::ₘ ps' : ProcSet) := by
+        simpa [h1] using hw_in_left
+      have hps' : $[wait m] ∈ ps' := by
+        rcases Multiset.mem_cons.mp hw_in_right with h_eq | h_mem
+        · cases h_eq
+        · exact h_mem
+      have hm : m ∈ tickets ps' := by
+        simp [tickets]
+        exists $[wait m]
+      apply hk at hm; simp at hm
+  | exit n m ps =>
+      simp at *
+      sorry
+  | wake n m ps => sorry
+
+
 
 def inv_pred (cf : Conf) : Prop :=
   init_pred cf ∨ wait_pred cf ∨ crit_pred cf
@@ -289,3 +311,93 @@ lemma inv_mutex : ∀ (cf : Conf), inv_pred cf → mutex_pred cf := sorry
 theorem bakery_mutex {cf cf' : Conf} :
     (init_pred cf ∧ (cf ⇒* cf')) →
     (mutex_pred cf') := by sorry
+
+
+
+
+-----------------------
+--- Meta Properties ---
+-----------------------
+
+
+class IndInv (pred : Conf → Prop) (init : Conf → Prop) (step : Conf → Conf → Prop) where
+    base : ∀ cf : Conf, init cf → pred cf
+    ind : ∀ (cf cf' : Conf), (pred cf ∧ (step cf cf')) → (pred cf')
+
+variable {pred init : Conf → Prop}
+variable {step : Conf → Conf → Prop}
+
+theorem invariant
+    [hInv : IndInv pred init step]
+    {cf cf' : Conf}
+    (h0 : init cf)
+    (hrt : Relation.ReflTransGen step cf cf') :
+    pred cf' := by
+  induction hrt with
+  | refl =>
+      -- this case is cf' = cf
+      -- so we just use base
+      have : pred cf := hInv.base cf h0
+      -- x is definitionaly cf, so:
+      simpa using this
+  | tail hxy hyz ih =>
+      -- hxy : ReflTransGen step cf ?y
+      -- hyz : step ?y ?z
+      -- ih  : pred ?y
+      have hpair : pred _ ∧ step _ _ := ⟨ih, hyz⟩
+      exact hInv.ind _ _ hpair
+
+--- Conjunction of invariants is an invariant
+instance IndInvConj
+    (pred₁ pred₂ init step)
+    [h1 : IndInv pred₁ init step]
+    [h2 : IndInv pred₂ init step] :
+    IndInv (fun cf => pred₁ cf ∧ pred₂ cf) init step where
+  base cf h0 :=
+    ⟨h1.base cf h0, h2.base cf h0⟩
+  ind cf cf' h := by
+    rcases h with ⟨⟨hp1, hp2⟩, hstep⟩
+    exact ⟨h1.ind cf cf' ⟨hp1, hstep⟩, h2.ind cf cf' ⟨hp2, hstep⟩⟩
+
+--- “Safety” meta-theorem: no bad state is reachable
+def Safe (init : Conf → Prop) (step : Conf → Conf → Prop) (Bad : Conf → Prop) : Prop :=
+  ∀ cf cf', init cf → Relation.ReflTransGen step cf cf' → ¬ Bad cf'
+
+theorem IndInv.safe
+    {pred init : Conf → Prop} {step : Conf → Conf → Prop}
+    [IndInv pred init step]
+    (Bad : Conf → Prop)
+    (hExclude : ∀ cf, pred cf → ¬ Bad cf) :
+    Safe init step Bad := by
+  intro cf cf' h0 hreach
+  -- from inductive invariant:
+  have hp : pred cf' :=
+    invariant (pred:=pred) (init:=init) (step:=step) h0 hreach
+  exact hExclude cf' hp
+
+
+--- Restricting the initial set
+theorem IndInv.restrict_init
+    {pred init init' : Conf → Prop} {step : Conf → Conf → Prop}
+    [hInv : IndInv pred init step]
+    (hSub : ∀ cf, init' cf → init cf) :
+    IndInv pred init' step where
+  base cf h0 :=
+    hInv.base cf (hSub cf h0)
+  ind cf cf' h :=
+    hInv.ind cf cf' h
+
+--- Invariants for an equivalent step relation
+theorem IndInv.congr_step
+    {pred init : Conf → Prop}
+    {step₁ step₂ : Conf → Conf → Prop}
+    (hEq : ∀ cf cf', step₁ cf cf' ↔ step₂ cf cf')
+    [hInv : IndInv pred init step₁] :
+    IndInv pred init step₂ where
+  base cf h0 := hInv.base cf h0
+  ind cf cf' h := by
+    -- h : pred cf ∧ step₂ cf cf'
+    have h' : pred cf ∧ step₁ cf cf' :=
+      ⟨h.1, (hEq cf cf').mpr h.2⟩
+    -- reuse old instance
+    exact hInv.ind cf cf' h'
