@@ -534,7 +534,7 @@ lemma inv_mutex : ∀ (cf : Conf), inv_pred cf → ¬ two_crits cf := by
             cases h_eq
 
 
-theorem mutex : ∀ cf cf', init_pred cf → cf ⇒* cf' → ¬ two_crits cf' := by
+theorem mutex : ∀ cf cf', (init_pred cf) → (cf ⇒* cf') → ¬ two_crits cf' := by
   intro cf cf' hinit hstep hbad
   have h := IndInv.safe1 (step:=Step) (init:=init_pred) (Bad:=two_crits) inv_mutex
   unfold Safe at h
