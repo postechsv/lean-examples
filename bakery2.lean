@@ -40,7 +40,7 @@ inductive Step : Conf → Conf → Prop where
       Step {t := n, s := m,      c := {$[crit m]} + ps}
            {t := n, s := succ m, c := {$[idle]} + ps}
 
----
+--- DMC: Define the System instance for Conf
 instance : System Conf where
   step := Step
 
@@ -51,3 +51,19 @@ def init1 : Conf :=
 --- notations (e.g., =>*) are available from DMC
 example : init1 ⇒* init1 := by
   apply Relation.ReflTransGen.refl
+
+--- all proces are idle
+def is (ps : ProcSet) :=
+  ∀m ∈ ps, m = $[idle]
+
+--- all procs are either idle or waiting
+def ws (ps : ProcSet) :=
+  ∀m ∈ ps, (m = $[idle] ∨ ∃ n, m = $[wait n])
+
+def Proc.ticket? : Proc → Option Nat
+  | $[wait n] => some n
+  | $[crit n] => some n
+  | $[idle]   => none
+
+--- return the set of all ticket numbers in a procset
+def tickets (ps : ProcSet) : Multiset Nat := ps.filterMap Proc.ticket?
