@@ -19,16 +19,16 @@ infix:110 " ⇒ " => Step
 infix:110 " ⇒* " => Relation.ReflTransGen Step
 ```
 
+## Verifying safety by inductive invariants
+
+
 ## representing inductive invariants
 ```
 def init_pred (cf : Conf) : Prop :=
   cf.t = cf.s ∧ is cf.c
 
-#check init_pred
-
 def wait_pred (cf : Conf) : Prop :=
   cf.t > cf.s ∧ ws cf.c ∧ (∀ k ∈ tickets cf.c, k ≥ cf.s ∧ k < cf.t) ∧ ((tickets cf.c).Nodup)
-
 
 def crit_pred (cf : Conf) : Prop :=
   cf.t > cf.s ∧
