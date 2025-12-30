@@ -90,5 +90,12 @@ theorem inv_step : ∀ cf cf' : Conf, Inv cf → cf ⇒ cf' → Inv cf' := by
 ```
 
 ### Inductive Step
+For every transition in `Step` (`wake`, `crit`, `exit`), we show that if `Inv cf` holds, then `Inv cf` must also hold.
 
 ```lean
+theorem inv_step : ∀ cf cf' : Conf, Inv cf → cf ⇒ cf' → Inv cf' := by
+  intros cf cf' h_inv h_step
+  cases h_step <;> cases h_inv
+  -- The proof proceeds by analyzing how each transition 
+  -- affects the ticket ranges and the Nodup property.
+```
