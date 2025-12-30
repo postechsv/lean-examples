@@ -115,3 +115,6 @@ theorem mutual_exclusion : ∀ cf : Conf, Inv cf →
   (∀ m n, {$[crit m]} + {$[crit n]} ⊆ cf.c → m = n) := by
   -- Follows from the structure of crit_pred
 ```
+
+## 5. Summary
+By using DMC-Logic, we transformed the Bakery Algorithm into a formal rewrite theory. We defined an inductive invariant that captures the relationship between the ticket counters and the process states, and used Lean to mechanically verify that this invariant holds across all possible executions.
