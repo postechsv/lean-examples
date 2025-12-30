@@ -77,3 +77,18 @@ Verification in `bakery.lean` follows the standard inductive approach. We must p
 
 1. base step: The starting state satisfies Inv.
 2. inductive step: Every valid Step preserves Inv.
+
+### Base Step
+We prove that the initial configuration (where `t=0`, `s=0`, and all processes are `idle`) satisfies `init_pred`.
+
+```lean
+theorem inv_step : ∀ cf cf' : Conf, Inv cf → cf ⇒ cf' → Inv cf' := by
+  intros cf cf' h_inv h_step
+  cases h_step <;> cases h_inv
+  -- The proof proceeds by analyzing how each transition 
+  -- affects the ticket ranges and the Nodup property.
+```
+
+### Inductive Step
+
+```lean
