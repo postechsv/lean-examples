@@ -30,22 +30,15 @@ inductive Step : Conf → Conf → Prop where
 infix:110 " ⇒ " => Step
 infix:110 " ⇒* " => Relation.ReflTransGen Step
 
-## Verifying safety by inductive invariants
+## 2. Representing Inductive Invariants
+To prove safety, we define predicates that describe all "reachable" and "safe" states. We categorize the system state into three main phases:
 
+### Initial State
+The system starts with the ticket and serving counters equal, and all processes `idle`.
 
-## representing inductive invariants
-```
+```lean
 def init_pred (cf : Conf) : Prop :=
   cf.t = cf.s ∧ is cf.c
-
-def wait_pred (cf : Conf) : Prop :=
-  cf.t > cf.s ∧ ws cf.c ∧ (∀ k ∈ tickets cf.c, k ≥ cf.s ∧ k < cf.t) ∧ ((tickets cf.c).Nodup)
-
-def crit_pred (cf : Conf) : Prop :=
-  cf.t > cf.s ∧
-  ∃ ps : ProcSet,
-    cf.c = {$[crit cf.s]} + ps ∧
-    ws ps ∧
-    (∀ k ∈ tickets ps, k > cf.s ∧ k < cf.t) ∧
-    ((tickets ps).Nodup)
 ```
+
+
