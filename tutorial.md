@@ -99,3 +99,7 @@ theorem inv_step : ∀ cf cf' : Conf, Inv cf → cf ⇒ cf' → Inv cf' := by
   -- The proof proceeds by analyzing how each transition 
   -- affects the ticket ranges and the Nodup property.
 ```
+
+###
+4. Final Safety Result: Mutual Exclusion
+The ultimate goal is to prove Mutual Exclusion: no two processes can be in the `crit` state simultaneously. Once we have proven that `Inv` is inductive, we derive the final safety theorem:
