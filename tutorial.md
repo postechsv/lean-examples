@@ -71,3 +71,9 @@ The overall invariant Inv is the disjunction of these three possibilities.
 def Inv (cf : Conf) : Prop :=
   init_pred cf ∨ wait_pred cf ∨ crit_pred cf
 ```
+
+## 3. Verifying Safety by Inductive Invariants
+Verification in `bakery.lean` follows the standard inductive approach. We must prove two main properties:
+
+1. base step: The starting state satisfies Inv.
+2. inductive step: Every valid Step preserves Inv.
